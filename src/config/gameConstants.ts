@@ -14,7 +14,11 @@ export interface EraPack {
 }
 
 export const ERA_PACKS: EraPack[] = [
-  { id: 'modern', label: '2020–2026', startYear: 2020, endYear: 2026, unlocked: true }, // TUNE
+  { id: 'eighties', label: '1984–1989', startYear: 1984, endYear: 1989, unlocked: true }, // TUNE
+  { id: 'nineties', label: '1990–1999', startYear: 1990, endYear: 1999, unlocked: true },
+  { id: 'aughts', label: '2000–2009', startYear: 2000, endYear: 2009, unlocked: true },
+  { id: 'tens', label: '2010–2019', startYear: 2010, endYear: 2019, unlocked: true },
+  { id: 'modern', label: '2020–2026', startYear: 2020, endYear: 2026, unlocked: true },
 ];
 
 // --- Roster generation (DEAL) ---
@@ -97,9 +101,12 @@ export const SIM = {
   GAMES: 82,
   // logistic map of rosterStrength → expected wins.
   // wins = GAMES / (1 + exp(-STEEP * (strength - MIDPOINT)))
-  // MIDPOINT must sit near the median rosterStrength the rosters actually produce.
-  LOGISTIC_MIDPOINT: 4.5, // TUNE — calibrated to fake-data median rosterStrength (~3)
-  LOGISTIC_STEEP: 0.176, // TUNE — spread maps ~18W (weak) → 36W (median) → 77W (elite)
+  // MIDPOINT must sit near the median rosterStrength the rosters actually produce, so the
+  // MEDIAN random roster lands at ~.500 and a strong record has to be earned.
+  // Recalibrated on REAL data (1984–2026) + the current generator: across eras the median
+  // rosterStrength sits ~8–11 (aggregate ~9), p10 ~5, p90 ~15, elite max ~26.
+  LOGISTIC_MIDPOINT: 9.0, // TUNE — aggregate median rosterStrength on real data → ~41W median
+  LOGISTIC_STEEP: 0.118, // TUNE — maps ~31W (weak p10) → 41W (median) → 55W (p90) → ~72W (elite)
   // Gaussian noise on final wins. Scales DOWN with rotation size: wide rotations buy
   // consistency. sigma_eff = WIN_NOISE_SIGMA * (IDEAL / rotationSize) ^ NOISE_SIZE_POWER
   WIN_NOISE_SIGMA: 3.0, // TUNE — base sigma at the ideal rotation

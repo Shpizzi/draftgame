@@ -21,13 +21,23 @@ const __dirname = dirname(fileURLToPath(import.meta.url));
 const ARCHIVE = resolve(__dirname, '../../archive');
 const OUT = resolve(__dirname, '../../data/seasons');
 
-const SEASONS = [2020, 2021, 2022, 2023, 2024, 2025, 2026];
+const FIRST_SEASON = 1984; // "fino dall'84" — BPM/VORP exist from 1973-74, so 1984 is safe.
+const LAST_SEASON = 2026;
+const SEASONS = Array.from(
+  { length: LAST_SEASON - FIRST_SEASON + 1 },
+  (_, i) => FIRST_SEASON + i,
+);
 
-// Real schedule length per season (COVID-shortened 2020 bubble & 2021). Used to
-// normalize games played to an 82-game equivalent so availability is fair and the
-// engine can keep SIM.GAMES = 82. NBA-specific knowledge → lives in the pipeline only.
+// Real schedule length only for the seasons that were NOT 82 games — strike/COVID years.
+// Everything else defaults to 82 (DEFAULT_SCHEDULE). Used to normalize games played to an
+// 82-game equivalent so availability is fair and the engine can keep SIM.GAMES = 82.
+// NBA-specific knowledge → lives in the pipeline only.
+const DEFAULT_SCHEDULE = 82;
 const SCHEDULE: Record<number, number> = {
-  2020: 72, 2021: 72, 2022: 82, 2023: 82, 2024: 82, 2025: 82, 2026: 82,
+  1999: 50, // lockout
+  2012: 66, // lockout
+  2020: 72, // COVID bubble
+  2021: 72, // COVID
 };
 
 // --- tiny CSV parser (handles quoted fields with commas) ---
@@ -114,7 +124,7 @@ function buildSeason(season: number): SeasonData {
     if (!a) continue;
     const pgRow = repRow(pg.get(key) ?? { teamRows: [] });
 
-    const schedule = SCHEDULE[season];
+    const schedule = SCHEDULE[season] ?? DEFAULT_SCHEDULE;
     const gamesNorm = Math.min(
       SIM.GAMES,
       Math.round((num(a.g) / schedule) * SIM.GAMES),

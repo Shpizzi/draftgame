@@ -6,7 +6,11 @@
 import { describe, it, expect } from 'vitest';
 import { act, renderHook } from '@testing-library/react';
 import { useGame } from '@/state/useGame';
-import { ROTATION, ROSTER_SIZE, TRADE_MOVES } from '@/config/gameConstants';
+import { ROTATION, ROSTER_SIZE, TRADE_MOVES, ERA_PACKS } from '@/config/gameConstants';
+
+const unlocked = ERA_PACKS.filter((e) => e.unlocked);
+const FIRST_YEAR = Math.min(...unlocked.map((e) => e.startYear));
+const LAST_YEAR = Math.max(...unlocked.map((e) => e.endYear));
 
 describe('full game loop (useGame)', () => {
   it('plays spin → deal → trade → rotation → simulate → reveal end-to-end', () => {
@@ -17,7 +21,8 @@ describe('full game loop (useGame)', () => {
     act(() => result.current.spin());
     expect(result.current.state.phase).toBe('deal');
     expect(result.current.season).not.toBeNull();
-    expect(result.current.state.season).toBeGreaterThanOrEqual(2020);
+    expect(result.current.state.season).toBeGreaterThanOrEqual(FIRST_YEAR);
+    expect(result.current.state.season).toBeLessThanOrEqual(LAST_YEAR);
 
     act(() => result.current.deal());
     expect(result.current.state.phase).toBe('trade');

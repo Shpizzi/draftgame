@@ -5,7 +5,11 @@ import PlayerCard from '@/components/PlayerCard';
 import TradePanel from '@/components/TradePanel';
 import RotationPicker from '@/components/RotationPicker';
 import SimReveal from '@/components/SimReveal';
-import { ROTATION } from '@/config/gameConstants';
+import { ROTATION, ERA_PACKS, TRADE_MOVES } from '@/config/gameConstants';
+
+const unlockedEras = ERA_PACKS.filter((e) => e.unlocked);
+const FIRST_YEAR = Math.min(...unlockedEras.map((e) => e.startYear));
+const LAST_YEAR = Math.max(...unlockedEras.map((e) => e.endYear));
 
 export default function Page() {
   const game = useGame();
@@ -17,7 +21,7 @@ export default function Page() {
         <div>
           <h1>🏀 NBA Roster Draft</h1>
           <p className="sub">
-            Draw a random historical roster · optimize with 3 trades · set your rotation · simulate the season
+            Draw a random historical roster · optimize with {TRADE_MOVES} trades · set your rotation · simulate the season
           </p>
         </div>
         <div style={{ textAlign: 'right' }}>
@@ -32,7 +36,7 @@ export default function Page() {
       {state.phase === 'spin' && (
         <div className="panel">
           <h2>Spin the wheel</h2>
-          <p className="hint">Pick a random season from the unlocked era (2020–2026).</p>
+          <p className="hint">Pick a random season from the unlocked eras ({FIRST_YEAR}–{LAST_YEAR}).</p>
           <button className="primary" onClick={game.spin}>Spin →</button>
         </div>
       )}
