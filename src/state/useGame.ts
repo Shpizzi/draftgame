@@ -132,8 +132,11 @@ export function useGame(): UseGame {
     const outPlayers = state.roster.filter((p) => outIds.includes(p.id));
     const target = findPlayer(targetId);
     if (!target || outPlayers.length === 0) return;
+    // Guard the depth floor: a many-for-1 leaves holes, but you must keep enough bodies
+    // to field a rotation. Resulting size = roster − out + 1; never let it drop below MIN.
+    if (state.roster.length - outPlayers.length + 1 < ROTATION.MIN) return;
     const proposal: TradeProposal = { out: outPlayers, target };
-    const outcome = resolveTrade(rng, state.roster, data.players, proposal, state.movesLeft);
+    const outcome = resolveTrade(rng, state.roster, proposal, state.movesLeft);
     setState((s) => ({
       ...s,
       roster: outcome.roster,

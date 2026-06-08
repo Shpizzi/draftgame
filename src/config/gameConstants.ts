@@ -72,6 +72,10 @@ export const TRADE = {
   MIN: 0.03,
   MAX: 0.95,
   FAILED_TRADE_BURNS_MOVE: true, // open question #2 default: burn the move
+  // Max players you can send away in one trade. Their tradeValues sum into the offer,
+  // so a bigger package lands a bigger target; the roster refills with role players to
+  // stay at ROSTER_SIZE. The engine handles any N; this only caps the UI. // TUNE
+  MAX_OUT: 3,
 };
 
 // --- Rotation & fatigue ---

@@ -4,8 +4,7 @@
 
 import type { PlayerSeason, TradeRecord } from '@/types';
 import type { Rng } from './rng';
-import { ROSTER_SIZE, TRADE, TRADE_MOVES } from '@/config/gameConstants';
-import { weightedSample } from './rosterGenerator';
+import { TRADE, TRADE_MOVES } from '@/config/gameConstants';
 
 const clamp = (x: number, lo: number, hi: number) => Math.max(lo, Math.min(hi, x));
 
@@ -21,28 +20,26 @@ export function acceptanceProb(offerValue: number, targetValue: number): number 
 }
 
 export interface TradeProposal {
-  out: PlayerSeason[]; // 1 or 2 players from the roster
+  out: PlayerSeason[]; // 1..TRADE.MAX_OUT players from the roster (their values sum into the offer)
   target: PlayerSeason; // player wanted from the season pool
 }
 
 export interface TradeOutcome {
   record: TradeRecord;
-  roster: PlayerSeason[]; // resulting roster (always ROSTER_SIZE)
+  roster: PlayerSeason[]; // post-trade roster — SHRINKS by (out − 1) on a many-for-1
   movesLeft: number;
-  refilled: PlayerSeason | null; // role player added back when a 2-for-1 left a hole
 }
 
 /**
  * Resolve a trade proposal against the current roster.
  * - Burns a move (default; failed trades still consume the move).
- * - On a 2-for-1, the roster drops to 11 then is refilled with a weighted role draw
- *   from the pool, keeping size at ROSTER_SIZE. (Short-roster play is a UI choice
- *   handled elsewhere; the engine keeps the roster full by default.)
+ * - On a many-for-1 the roster SHRINKS: you give N players, receive 1, and the (N − 1)
+ *   freed slots stay EMPTY — no auto-refill. Concentrating value into a star is paid for
+ *   in depth. Keeping the roster playable (≥ rotation minimum) is enforced in the UI.
  */
 export function resolveTrade(
   rng: Rng,
   roster: PlayerSeason[],
-  pool: PlayerSeason[],
   proposal: TradeProposal,
   movesLeft: number,
 ): TradeOutcome {
@@ -65,32 +62,16 @@ export function resolveTrade(
   const newMovesLeft = Math.max(0, movesLeft - cost);
 
   if (!succeeded) {
-    return { record, roster, movesLeft: newMovesLeft, refilled: null };
+    return { record, roster, movesLeft: newMovesLeft };
   }
 
-  // Remove the offered players, add the target.
+  // Remove the offered players, add the target. The roster shrinks by (out − 1):
+  // a 2-for-1 leaves 1 hole, a 3-for-1 leaves 2. Holes are NOT refilled.
   const outIds = new Set(proposal.out.map((p) => p.id));
-  let newRoster = roster.filter((p) => !outIds.has(p.id));
+  const newRoster = roster.filter((p) => !outIds.has(p.id));
   newRoster.push(proposal.target);
 
-  // Refill back up to ROSTER_SIZE with weighted role-player draws from the pool.
-  let refilled: PlayerSeason | null = null;
-  if (newRoster.length < ROSTER_SIZE) {
-    const inRoster = new Set(newRoster.map((p) => p.id));
-    inRoster.add(proposal.target.id);
-    const fillPool = pool.filter(
-      (p) => !inRoster.has(p.id) && p.tier === 'role',
-    );
-    const usablePool = fillPool.length > 0
-      ? fillPool
-      : pool.filter((p) => !inRoster.has(p.id));
-    const needed = ROSTER_SIZE - newRoster.length;
-    const fillers = weightedSample(rng, usablePool, needed);
-    if (fillers.length > 0) refilled = fillers[0];
-    newRoster = newRoster.concat(fillers);
-  }
-
-  return { record, roster: newRoster, movesLeft: newMovesLeft, refilled };
+  return { record, roster: newRoster, movesLeft: newMovesLeft };
 }
 
 export const STARTING_MOVES = TRADE_MOVES;

@@ -91,9 +91,57 @@ button.danger { border-color: rgba(240, 138, 106, 0.4); color: var(--bad); }
 .card.selected { border-color: var(--accent); box-shadow: 0 0 0 1px var(--accent), var(--shadow); }
 .card.out { border-color: rgba(240, 138, 106, 0.5); }
 .card.dim { opacity: 0.45; }
+.card.empty {
+  display: flex; align-items: center; justify-content: center;
+  min-height: 76px;
+  background: transparent;
+  border: 1px dashed var(--border-strong);
+  color: var(--muted);
+  font-size: 13px; font-weight: 600; letter-spacing: 0.3px;
+}
 
+.card-head { display: flex; align-items: center; gap: 11px; }
+.card-id { min-width: 0; padding-right: 20px; }
 .card .name { font-weight: 600; font-size: 14px; }
 .card .meta { color: var(--muted); font-size: 12px; margin-top: 3px; }
+
+.avatar {
+  flex-shrink: 0;
+  border-radius: 50%;
+  object-fit: cover;
+  background: var(--panel-2);
+  border: 1px solid var(--border-strong);
+}
+.avatar-fallback {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 800;
+  color: #0b1018;
+  letter-spacing: -0.5px;
+}
+
+/* Roster balance — players per position */
+.pos-balance { display: grid; grid-template-columns: repeat(5, 1fr); gap: 10px; }
+.pos-col {
+  display: flex; flex-direction: column; align-items: center; gap: 6px;
+  background: var(--panel-2); border: 1px solid var(--border);
+  border-radius: 12px; padding: 10px 6px 8px;
+}
+.pos-col .pos-count { font-size: 20px; font-weight: 800; line-height: 1; }
+.pos-col .pos-bar {
+  width: 100%; height: 34px; display: flex; align-items: flex-end;
+  background: rgba(255, 255, 255, 0.05); border-radius: 6px; overflow: hidden;
+}
+.pos-col .pos-bar > span {
+  display: block; width: 100%; min-height: 3px;
+  background: var(--accent); border-radius: 6px 6px 0 0;
+  transition: height 0.2s;
+}
+.pos-col .pos-name { font-size: 11px; font-weight: 700; color: var(--muted); }
+.pos-col.pos-thin { border-color: rgba(240, 113, 106, 0.45); }
+.pos-col.pos-thin .pos-bar > span { background: var(--bad); }
+.pos-col.pos-thin .pos-count { color: var(--bad); }
 .card .stats { color: var(--muted); font-size: 12px; margin-top: 6px; display: flex; gap: 8px; flex-wrap: wrap; }
 .card .tv { position: absolute; top: 13px; right: 14px; font-weight: 800; font-size: 16px; color: var(--accent); }
 

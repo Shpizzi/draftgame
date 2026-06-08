@@ -1,6 +1,7 @@
 'use client';
 
 import type { PlayerSeason } from '@/types';
+import PlayerAvatar from './PlayerAvatar';
 
 interface Props {
   player: PlayerSeason;
@@ -33,13 +34,18 @@ export default function PlayerCard({
   return (
     <div className={cls} onClick={onClick}>
       <div className="tv">{player.tradeValue}</div>
-      <div className="name">{player.name}</div>
-      <div className="meta">
-        <span className="pos-badge">{player.position}</span>{' '}
-        <span className={`tier-${player.tier}`}>
-          <span className={`tier-dot dot-${player.tier}`} />
-          {tierLabel(player.tier)}
-        </span>
+      <div className="card-head">
+        <PlayerAvatar player={player} />
+        <div className="card-id">
+          <div className="name">{player.name}</div>
+          <div className="meta">
+            <span className="pos-badge">{player.position}</span>{' '}
+            <span className={`tier-${player.tier}`}>
+              <span className={`tier-dot dot-${player.tier}`} />
+              {tierLabel(player.tier)}
+            </span>
+          </div>
+        </div>
       </div>
     </div>
   );

@@ -57,7 +57,7 @@ export interface TradeRecord {
 
 export interface GameState {
   season: number;
-  roster: PlayerSeason[]; // always 12
+  roster: PlayerSeason[]; // 12 at deal; shrinks (holes left, no refill) on a many-for-1 trade
   rotation: string[]; // ids in rotation (5–10)
   movesLeft: number; // starts at TRADE_MOVES
   tradeHistory: TradeRecord[];

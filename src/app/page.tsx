@@ -57,7 +57,8 @@ export default function Page() {
               </button>
             </div>
             <p className="hint" style={{ marginBottom: 0 }}>
-              12 players. Number top-right is trade value (1–100), color dot is tier.
+              Up to 12 players. Number top-right is trade value (1–100), color dot is tier.
+              Trading many-for-1 leaves empty slots — depth is the price of a star.
             </p>
           </div>
           <div className="panel">
@@ -116,6 +117,11 @@ export default function Page() {
           <div className="grid" style={{ marginTop: 12 }}>
             {state.roster.map((p) => (
               <PlayerCard key={p.id} player={p} />
+            ))}
+            {Array.from({ length: Math.max(0, 12 - state.roster.length) }).map((_, i) => (
+              <div key={`empty-${i}`} className="card empty static">
+                <span>Empty slot</span>
+              </div>
             ))}
           </div>
         </details>

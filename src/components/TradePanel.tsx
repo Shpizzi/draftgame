@@ -3,7 +3,9 @@
 import { useMemo, useState } from 'react';
 import type { PlayerSeason, SeasonData } from '@/types';
 import PlayerCard from './PlayerCard';
+import PositionBalance from './PositionBalance';
 import { createRng } from '@/engine/rng';
+import { TRADE, ROSTER_SIZE } from '@/config/gameConstants';
 
 const TARGET_COUNT = 24;
 
@@ -56,11 +58,12 @@ export default function TradePanel({
   const toggleOut = (id: string) => {
     setOutIds((cur) => {
       if (cur.includes(id)) return cur.filter((x) => x !== id);
-      if (cur.length >= 2) return cur; // max 2-for-1
+      if (cur.length >= TRADE.MAX_OUT) return cur; // max N-for-1
       return [...cur, id];
     });
   };
 
+  const emptySlots = ROSTER_SIZE - roster.length;
   const target = targetId ? season.players.find((p) => p.id === targetId) ?? null : null;
   const offerValue = roster
     .filter((p) => outIds.includes(p.id))
@@ -83,12 +86,21 @@ export default function TradePanel({
         <span className="moves">Moves left: <b>{movesLeft}</b></span>
       </div>
       <p className="hint" style={{ marginTop: 0 }}>
-        Select <b>1 or 2</b> players to send away, then pick a target. Offer ≥ target value → ~99% accepted.
-        Each attempt burns a move, success or not.
+        Select <b>1 to {TRADE.MAX_OUT}</b> players to send away, then pick a target. Offer ≥ target value → ~99% accepted.
+        Each attempt burns a move, success or not. <b>Many-for-1 leaves empty roster slots</b> — you trade depth for a star.
       </p>
 
       <div className="divider" />
-      <h2>Send away ({outIds.length}/2)</h2>
+      <div className="spread" style={{ marginBottom: 10 }}>
+        <h2 style={{ margin: 0 }}>Roster balance <span className="hint" style={{ fontWeight: 400 }}>(players per position)</span></h2>
+        <span className={`pill ${emptySlots > 0 ? 'bad' : ''}`}>
+          {roster.length}/{ROSTER_SIZE}{emptySlots > 0 ? ` · ${emptySlots} empty` : ''}
+        </span>
+      </div>
+      <PositionBalance roster={roster} />
+
+      <div className="divider" />
+      <h2>Send away ({outIds.length}/{TRADE.MAX_OUT})</h2>
       <div className="grid">
         {roster.map((p) => (
           <PlayerCard
