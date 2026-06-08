@@ -141,7 +141,7 @@ export default function SimReveal({ state, season, score }: Props) {
             {state.tradeHistory.map((t, i) => (
               <tr key={i}>
                 <td>{t.out.map((id) => nameById.get(id) ?? id).join(' + ')}</td>
-                <td>{nameById.get(t.in) ?? t.in}</td>
+                <td>{t.in.map((id) => nameById.get(id) ?? id).join(' + ')}</td>
                 <td className="num">{t.offerValue} → {t.targetValue}</td>
                 <td className="num">{Math.round(t.acceptanceProb * 100)}%</td>
                 <td>

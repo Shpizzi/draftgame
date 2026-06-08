@@ -11,6 +11,7 @@ import { spinWheel } from '@/engine/wheel';
 import { generateRoster } from '@/engine/rosterGenerator';
 import {
   acceptanceProb,
+  boostedProb,
   resolveTrade,
   STARTING_MOVES,
   type TradeProposal,
@@ -18,7 +19,7 @@ import {
 import { simulateSeason } from '@/engine/simulation';
 import { scoreRun, type Score } from '@/engine/scoring';
 import { getSeason } from '@/data/loadSeasons';
-import { ROTATION } from '@/config/gameConstants';
+import { ROTATION, ROSTER_SIZE } from '@/config/gameConstants';
 
 function defaultRotation(roster: PlayerSeason[]): string[] {
   return [...roster]
@@ -35,8 +36,8 @@ export interface UseGame {
   newRun: () => void;
   spin: () => void;
   deal: () => void;
-  previewTrade: (outIds: string[], targetId: string) => number; // acceptance prob
-  commitTrade: (outIds: string[], targetId: string) => void;
+  previewTrade: (outIds: string[], inIds: string[], boost?: boolean) => number; // acceptance prob
+  commitTrade: (outIds: string[], inIds: string[], boost?: boolean) => void;
   toggleRotation: (id: string) => void;
   goToRotation: () => void;
   simulate: () => void;
@@ -48,6 +49,7 @@ const initialState = (seed: string): GameState => ({
   roster: [],
   rotation: [],
   movesLeft: STARTING_MOVES,
+  higherProbUsed: false,
   tradeHistory: [],
   phase: 'spin',
   seed,
@@ -116,36 +118,43 @@ export function useGame(): UseGame {
     return data?.players.find((p) => p.id === id);
   };
 
-  const previewTrade = useCallback((outIds: string[], targetId: string): number => {
-    const target = findPlayer(targetId);
-    if (!target) return 0;
+  const previewTrade = useCallback((outIds: string[], inIds: string[], boost = false): number => {
     const offerValue = state.roster
       .filter((p) => outIds.includes(p.id))
       .reduce((sum, p) => sum + p.tradeValue, 0);
-    return acceptanceProb(offerValue, target.tradeValue);
+    const targetValue = inIds
+      .map(findPlayer)
+      .reduce((sum, p) => sum + (p?.tradeValue ?? 0), 0);
+    if (inIds.length === 0) return 0;
+    return boostedProb(acceptanceProb(offerValue, targetValue), boost);
   }, [state.roster]);
 
-  const commitTrade = useCallback((outIds: string[], targetId: string) => {
+  const commitTrade = useCallback((outIds: string[], inIds: string[], boost = false) => {
     const rng = ensureRng();
     const data = seasonRef.current;
     if (!data || state.movesLeft <= 0) return;
     const outPlayers = state.roster.filter((p) => outIds.includes(p.id));
-    const target = findPlayer(targetId);
-    if (!target || outPlayers.length === 0) return;
-    // Guard the depth floor: a many-for-1 leaves holes, but you must keep enough bodies
-    // to field a rotation. Resulting size = roster − out + 1; never let it drop below MIN.
-    if (state.roster.length - outPlayers.length + 1 < ROTATION.MIN) return;
-    const proposal: TradeProposal = { out: outPlayers, target };
-    const outcome = resolveTrade(rng, state.roster, proposal, state.movesLeft);
+    const inPlayers = inIds.map(findPlayer).filter((p): p is PlayerSeason => !!p);
+    if (outPlayers.length === 0 || inPlayers.length === 0) return;
+    // Resulting roster = roster − out + in. Keep it playable and capped: never below the
+    // rotation minimum, never above ROSTER_SIZE (you can only take net players into holes).
+    const resultSize = state.roster.length - outPlayers.length + inPlayers.length;
+    if (resultSize < ROTATION.MIN || resultSize > ROSTER_SIZE) return;
+    // The power-up applies only if requested AND not already spent this run. It is consumed
+    // on commit regardless of whether the trade lands — it's a boost, not a guarantee.
+    const useBoost = boost && !state.higherProbUsed;
+    const proposal: TradeProposal = { out: outPlayers, in: inPlayers };
+    const outcome = resolveTrade(rng, state.roster, proposal, state.movesLeft, useBoost);
     setState((s) => ({
       ...s,
       roster: outcome.roster,
       // keep rotation valid: drop ids no longer on the roster
       rotation: s.rotation.filter((id) => outcome.roster.some((p) => p.id === id)),
       movesLeft: outcome.movesLeft,
+      higherProbUsed: s.higherProbUsed || useBoost,
       tradeHistory: [...s.tradeHistory, outcome.record],
     }));
-  }, [ensureRng, state.movesLeft, state.roster]);
+  }, [ensureRng, state.movesLeft, state.roster, state.higherProbUsed]);
 
   const toggleRotation = useCallback((id: string) => {
     setState((s) => {

@@ -19,7 +19,7 @@ describe('trade resolution invariants', () => {
         .sort((a, b) => b.tradeValue - a.tradeValue)[0];
       // offer two players to maximize accept odds (2-for-1)
       const out = [...roster].sort((a, b) => b.tradeValue - a.tradeValue).slice(0, 2);
-      const outcome = resolveTrade(rng, roster, { out, target }, 3);
+      const outcome = resolveTrade(rng, roster, { out, in: [target] }, 3);
       if (outcome.record.succeeded) {
         // 2-for-1 → roster drops by 1 (one hole), never refilled
         expect(outcome.roster).toHaveLength(roster.length - out.length + 1);
@@ -35,6 +35,35 @@ describe('trade resolution invariants', () => {
     expect(accepted).toBeGreaterThan(0); // sanity: some trades actually succeeded
   });
 
+  it('1-for-2 grows the roster: send one, receive two (values sum)', () => {
+    const rng = createRng('grow-seed');
+    const roster = generateRoster(rng, season.players);
+    const inRoster = new Set(roster.map((p) => p.id));
+    // send the roster's most valuable player
+    const out = [...roster].sort((a, b) => b.tradeValue - a.tradeValue)[0];
+    // receive two pool players whose SUMMED value is just under the sent value, so the
+    // offer covers the target (gap <= 0 → ~99% accept).
+    const pool = [...season.players]
+      .filter((p) => !inRoster.has(p.id))
+      .sort((a, b) => b.tradeValue - a.tradeValue);
+    const inTwo = pool.filter((p) => p.tradeValue <= out.tradeValue / 2).slice(0, 2);
+    expect(inTwo).toHaveLength(2);
+
+    let found = false;
+    for (let i = 0; i < 50 && !found; i++) {
+      const r = createRng(`grow-${i}`);
+      const outcome = resolveTrade(r, roster, { out: [out], in: inTwo }, 3);
+      if (outcome.record.succeeded) {
+        // give 1, get 2 → net +1
+        expect(outcome.roster).toHaveLength(roster.length - 1 + 2);
+        for (const p of inTwo) expect(outcome.roster.some((q) => q.id === p.id)).toBe(true);
+        expect(outcome.roster.some((q) => q.id === out.id)).toBe(false);
+        found = true;
+      }
+    }
+    expect(found).toBe(true);
+  });
+
   it('failed trade leaves roster unchanged but still burns the move', () => {
     const rng = createRng('fail-seed-search');
     const roster = generateRoster(rng, season.players);
@@ -47,7 +76,7 @@ describe('trade resolution invariants', () => {
     let found = false;
     for (let i = 0; i < 100 && !found; i++) {
       const r = createRng(`reject-${i}`);
-      const outcome = resolveTrade(r, roster, { out: weakOut, target }, 3);
+      const outcome = resolveTrade(r, roster, { out: weakOut, in: [target] }, 3);
       if (!outcome.record.succeeded) {
         expect(outcome.roster).toEqual(roster); // unchanged
         expect(outcome.movesLeft).toBe(2); // burned anyway

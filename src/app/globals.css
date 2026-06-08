@@ -1,24 +1,36 @@
 :root {
-  --panel: #0f1521;
-  --panel-2: #1a2130;
-  --card-grad: linear-gradient(158deg, #1b2331 0%, #131a27 100%);
-  --border: rgba(255, 255, 255, 0.07);
-  --border-strong: rgba(255, 255, 255, 0.16);
-  --text: #f1f5f9;
-  --muted: #94a3b8;
-  --accent: #22c55e;
-  --accent-deep: #16a34a;
-  --accent-2: #22c55e;
-  --good: #22c55e;
-  --bad: #f0716a;
-  --superstar: #f5b15a;
+  --bg: #050505;
+  --panel: #121110;
+  --panel-2: #1c1a17;
+  --card-grad: linear-gradient(158deg, #1d1a16 0%, #141210 100%);
+  --border: rgba(255, 255, 255, 0.08);
+  --border-strong: rgba(255, 255, 255, 0.18);
+  --text: #ffffff;
+  --muted: #9a948c;
+  --accent: #f26414;
+  --accent-deep: #c2510f;
+  --accent-2: #fda73f;
+  --good: #fda73f;
+  --bad: #ef5350;
+  --ink: #050505; /* dark text used on orange CTAs */
+  --superstar: #fda73f;
   --star: #c79bff;
   --starter: #6fb3ff;
   --role: #8593a8;
-  --shadow: 0 12px 32px rgba(0, 0, 0, 0.45);
+  --shadow: 0 14px 36px rgba(0, 0, 0, 0.6);
 }
 
 * { box-sizing: border-box; }
+
+/* Respect users who ask for less motion — strip card lifts, bar fills, and transitions. */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
 
 html, body {
   margin: 0;
@@ -28,13 +40,13 @@ html, body {
   font-size: 15px;
   line-height: 1.45;
   background:
-    radial-gradient(70% 55% at 50% -8%, rgba(34, 197, 94, 0.08), transparent 60%),
-    radial-gradient(120% 100% at 50% 0%, #0e1626 0%, #070b14 52%, #03060c 100%);
+    radial-gradient(70% 55% at 50% -8%, rgba(242, 100, 20, 0.12), transparent 60%),
+    radial-gradient(120% 100% at 50% 0%, #0c0a08 0%, #070605 52%, #050505 100%);
   background-attachment: fixed;
   min-height: 100vh;
 }
 
-.wrap { max-width: 1040px; margin: 0 auto; padding: 28px 20px 80px; }
+.wrap { max-width: 1280px; margin: 0 auto; padding: 28px 20px 80px; }
 
 h1 { font-size: 26px; margin: 0 0 2px; letter-spacing: -0.5px; }
 h2 { font-size: 18px; margin: 0 0 12px; }
@@ -66,10 +78,19 @@ button {
 button:hover:not(:disabled) { background: #2a2b33; border-color: var(--border-strong); }
 button:active:not(:disabled) { transform: translateY(1px); }
 button:disabled { opacity: 0.4; cursor: not-allowed; }
-button.primary { background: var(--accent); color: #04210d; border-color: var(--accent); font-weight: 700; }
-button.primary:hover:not(:disabled) { background: #34d970; }
+button.primary { background: var(--accent); color: var(--ink); border-color: var(--accent); font-weight: 700; }
+button.primary:hover:not(:disabled) { background: #ff7a2e; }
 button.ghost { background: transparent; }
 button.danger { border-color: rgba(240, 138, 106, 0.4); color: var(--bad); }
+
+/* Keyboard focus — visible ring on every interactive element (buttons, the div-as-button
+   player cards, inputs). :focus-visible keeps it keyboard-only so mouse clicks stay clean. */
+button:focus-visible,
+input:focus-visible,
+.card.selectable:focus-visible {
+  outline: 2px solid var(--accent-2);
+  outline-offset: 2px;
+}
 
 .grid {
   display: grid;
@@ -181,6 +202,93 @@ td.num, th.num { text-align: right; font-variant-numeric: tabular-nums; }
 .seed { font-family: ui-monospace, monospace; font-size: 12px; color: var(--muted); }
 .divider { height: 1px; background: var(--border); margin: 16px 0; }
 .injured { color: var(--bad); }
+
+/* --- Hero intro screens (spin / deal) --- */
+.hero { text-align: center; padding: 56px 22px; }
+.hero .hint { margin: 4px auto 22px; }
+.hero-big {
+  font-size: clamp(56px, 12vw, 120px); font-weight: 800; letter-spacing: -3px;
+  line-height: 1; margin: 18px 0 8px;
+}
+.hero-big.muted { color: var(--muted); opacity: 0.5; }
+.hero button.primary { font-size: 15px; padding: 12px 22px; }
+
+/* --- Trade screen --- */
+.trade-screen { padding-bottom: 0; }
+.trade-head { display: flex; align-items: center; gap: 18px; }
+.trade-head h1 { font-size: 30px; }
+
+.stepper { display: flex; align-items: center; justify-content: center; gap: 10px; flex: 1; flex-wrap: wrap; }
+.step { display: flex; align-items: center; gap: 8px; }
+.step-dot {
+  display: inline-flex; align-items: center; justify-content: center;
+  width: 24px; height: 24px; border-radius: 50%; font-size: 12px; font-weight: 700;
+  background: var(--panel-2); border: 1px solid var(--border); color: var(--muted);
+}
+.step.done .step-dot { background: var(--accent-deep); border-color: var(--accent-deep); color: var(--ink); }
+.step.current .step-dot { border-color: var(--accent); color: var(--accent); }
+.step-label { font-size: 13px; font-weight: 600; color: var(--text); }
+
+.trade-cols {
+  display: grid; grid-template-columns: 1fr 1fr; gap: 0;
+}
+.trade-col { padding: 4px 0; }
+.trade-col-target { padding-left: 22px; margin-left: 22px; border-left: 1px solid var(--border); }
+.col-grid {
+  display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 10px;
+  align-content: start;
+}
+
+/* Photo-centric vertical player tile (trade grid) */
+.card.tile {
+  display: flex; flex-direction: column; align-items: center; text-align: center;
+  padding: 16px 12px 13px; gap: 2px;
+}
+.tile .tv { top: 10px; right: 12px; }
+.tile-ring { border-radius: 50%; margin: 4px 0 9px; line-height: 0; }
+.tile-name { font-weight: 700; font-size: 14px; line-height: 1.2; }
+.tile-team { color: var(--muted); font-size: 12px; margin-top: 2px; }
+.tile-foot {
+  margin-top: 9px; font-size: 10px; font-weight: 800; letter-spacing: 0.5px; text-transform: uppercase;
+  color: var(--muted); display: inline-flex; align-items: center; gap: 5px;
+}
+.card.tile.selected .tile-foot { color: var(--accent); }
+.card.tile.out .tile-foot { color: var(--bad); }
+
+.pos-chips { display: flex; gap: 6px; flex-wrap: wrap; }
+.pos-chip {
+  font-size: 12px; padding: 3px 9px; border-radius: 8px;
+  background: var(--panel-2); border: 1px solid var(--border); color: var(--muted);
+}
+.pos-chip b { color: var(--text); }
+.pos-chip.thin { border-color: rgba(240, 113, 106, 0.45); }
+.pos-chip.thin b { color: var(--bad); }
+
+.filter-chip {
+  font-size: 12px; font-weight: 700; padding: 6px 11px; border-radius: 8px;
+}
+.filter-chip.active { background: var(--accent); color: var(--ink); border-color: var(--accent); }
+
+button.armed { background: var(--accent); color: var(--ink); border-color: var(--accent); font-weight: 700; }
+
+.trade-bar {
+  position: sticky; bottom: 0; z-index: 5;
+  display: flex; align-items: center; gap: 22px;
+  margin: 22px -22px 0; padding: 16px 22px;
+  background: var(--panel-2); border-top: 1px solid var(--border);
+  border-radius: 0 0 20px 20px;
+}
+.trade-bar-stat { min-width: 0; }
+.trade-bar-num { font-size: 22px; font-weight: 700; }
+
+@media (max-width: 760px) {
+  .trade-cols { grid-template-columns: 1fr; }
+  .trade-col-target { padding-left: 0; margin-left: 0; border-left: none; border-top: 1px solid var(--border); padding-top: 18px; margin-top: 18px; }
+  .trade-head { flex-wrap: wrap; }
+  .trade-bar { flex-wrap: wrap; gap: 14px; }
+  /* Comfortable tap targets on touch screens (44px min per WCAG). */
+  button, input, .filter-chip { min-height: 44px; }
+}
 
 input, input[type="text"], input[type="search"] {
   font: inherit;

@@ -76,10 +76,16 @@ export const TRADE = {
   MIN: 0.03,
   MAX: 0.95,
   FAILED_TRADE_BURNS_MOVE: true, // open question #2 default: burn the move
-  // Max players you can send away in one trade. Their tradeValues sum into the offer,
-  // so a bigger package lands a bigger target; the roster refills with role players to
-  // stay at ROSTER_SIZE. The engine handles any N; this only caps the UI. // TUNE
+  // Both sides of a trade can hold multiple players; values SUM on each side. Sending a
+  // 44 for two 22s is an even (≈99%) swap. The roster shrinks or grows by (in − out), and
+  // the UI keeps the result within [ROTATION.MIN, ROSTER_SIZE] — receiving more than you
+  // send only works when you have empty slots. These cap the UI selection. // TUNE
   MAX_OUT: 3,
+  MAX_IN: 3,
+  // "Higher probability" power-up — usable ONCE per run. Lifts a long-shot trade toward
+  // acceptance via boosted = p + BONUS*(1-p): the absolute help is largest when p is low
+  // and tapers to ~0 as p→1 (never lowers a good trade). 0.15 turns a 10% into ~23%. // TUNE
+  HIGHER_PROB_BONUS: 0.15,
 };
 
 // --- Rotation & fatigue ---

@@ -19,9 +19,21 @@ export function acceptanceProb(offerValue: number, targetValue: number): number 
   );
 }
 
+/**
+ * Apply the one-time "higher probability" power-up to a base acceptance prob.
+ * boosted = p + BONUS*(1-p): largest absolute lift when p is low, tapers to ~0 as p→1.
+ * Capped at 1 only — NEVER clamped down to TRADE.MAX, so an even/favorable swap stays at
+ * its ~99%. Pass-through when boost is false. The single source of truth for the boost,
+ * shared by both the preview (displayed %) and resolution (the rolled %), so they agree.
+ */
+export function boostedProb(prob: number, boost: boolean): number {
+  if (!boost) return prob;
+  return Math.min(1, prob + TRADE.HIGHER_PROB_BONUS * (1 - prob));
+}
+
 export interface TradeProposal {
-  out: PlayerSeason[]; // 1..TRADE.MAX_OUT players from the roster (their values sum into the offer)
-  target: PlayerSeason; // player wanted from the season pool
+  out: PlayerSeason[]; // 1..TRADE.MAX_OUT players from the roster — values sum into the offer
+  in: PlayerSeason[]; // 1..TRADE.MAX_IN players wanted from the pool — values sum into the target
 }
 
 export interface TradeOutcome {
@@ -33,24 +45,26 @@ export interface TradeOutcome {
 /**
  * Resolve a trade proposal against the current roster.
  * - Burns a move (default; failed trades still consume the move).
- * - On a many-for-1 the roster SHRINKS: you give N players, receive 1, and the (N − 1)
- *   freed slots stay EMPTY — no auto-refill. Concentrating value into a star is paid for
- *   in depth. Keeping the roster playable (≥ rotation minimum) is enforced in the UI.
+ * - Values SUM on each side: offer = Σ out values, target = Σ in values. The roster
+ *   changes by (in − out): give 3 for 1 → 2 holes; give 1 for 2 → fill 1 hole. Holes are
+ *   never auto-refilled, and keeping the result within [MIN, ROSTER_SIZE] is enforced
+ *   upstream (the UI/orchestration), so the engine just applies the swap.
  */
 export function resolveTrade(
   rng: Rng,
   roster: PlayerSeason[],
   proposal: TradeProposal,
   movesLeft: number,
+  boost = false,
 ): TradeOutcome {
   const offerValue = proposal.out.reduce((s, p) => s + p.tradeValue, 0);
-  const targetValue = proposal.target.tradeValue;
-  const prob = acceptanceProb(offerValue, targetValue);
+  const targetValue = proposal.in.reduce((s, p) => s + p.tradeValue, 0);
+  const prob = boostedProb(acceptanceProb(offerValue, targetValue), boost);
   const succeeded = rng.chance(prob);
 
   const record: TradeRecord = {
     out: proposal.out.map((p) => p.id),
-    in: proposal.target.id,
+    in: proposal.in.map((p) => p.id),
     offerValue,
     targetValue,
     acceptanceProb: prob,
@@ -65,11 +79,10 @@ export function resolveTrade(
     return { record, roster, movesLeft: newMovesLeft };
   }
 
-  // Remove the offered players, add the target. The roster shrinks by (out − 1):
-  // a 2-for-1 leaves 1 hole, a 3-for-1 leaves 2. Holes are NOT refilled.
+  // Remove the offered players, add the acquired ones. Net size change = in − out.
   const outIds = new Set(proposal.out.map((p) => p.id));
   const newRoster = roster.filter((p) => !outIds.has(p.id));
-  newRoster.push(proposal.target);
+  newRoster.push(...proposal.in);
 
   return { record, roster: newRoster, movesLeft: newMovesLeft };
 }

@@ -48,9 +48,9 @@ export type GamePhase = 'spin' | 'deal' | 'trade' | 'rotation' | 'sim' | 'reveal
 
 export interface TradeRecord {
   out: string[]; // ids sent away
-  in: string; // id acquired
-  offerValue: number;
-  targetValue: number;
+  in: string[]; // ids acquired (1+ — you can take multiple players back)
+  offerValue: number; // sum of out values
+  targetValue: number; // sum of in values
   acceptanceProb: number;
   succeeded: boolean;
 }
@@ -60,6 +60,7 @@ export interface GameState {
   roster: PlayerSeason[]; // 12 at deal; shrinks (holes left, no refill) on a many-for-1 trade
   rotation: string[]; // ids in rotation (5–10)
   movesLeft: number; // starts at TRADE_MOVES
+  higherProbUsed: boolean; // the once-per-run "higher probability" power-up has been spent
   tradeHistory: TradeRecord[];
   phase: GamePhase;
   seed: string; // run seed (drives the whole run deterministically)

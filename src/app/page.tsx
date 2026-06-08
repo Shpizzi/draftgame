@@ -1,7 +1,6 @@
 'use client';
 
 import { useGame } from '@/state/useGame';
-import PlayerCard from '@/components/PlayerCard';
 import TradePanel from '@/components/TradePanel';
 import RotationPicker from '@/components/RotationPicker';
 import SimReveal from '@/components/SimReveal';
@@ -34,17 +33,19 @@ export default function Page() {
 
       {/* SPIN */}
       {state.phase === 'spin' && (
-        <div className="panel">
-          <h2>Spin the wheel</h2>
+        <div className="panel hero">
+          <h2 style={{ margin: 0 }}>Spin the wheel</h2>
+          <div className="hero-big muted">XXXX</div>
           <p className="hint">Pick a random season from the unlocked eras ({FIRST_YEAR}–{LAST_YEAR}).</p>
-          <button className="primary" onClick={game.spin}>Spin →</button>
+          <button className="primary" onClick={game.spin}>Spin the wheel →</button>
         </div>
       )}
 
       {/* DEAL */}
       {state.phase === 'deal' && season && (
-        <div className="panel">
-          <h2>The wheel landed on <span style={{ color: 'var(--accent)' }}>{state.season}</span></h2>
+        <div className="panel hero">
+          <h2 style={{ margin: 0 }}>The wheel landed on</h2>
+          <div className="hero-big">{state.season}</div>
           <p className="hint">Deal a random 12-player roster from that season&apos;s pool.</p>
           <button className="primary" onClick={game.deal}>Deal roster →</button>
         </div>
@@ -52,29 +53,15 @@ export default function Page() {
 
       {/* TRADE */}
       {state.phase === 'trade' && season && (
-        <>
-          <div className="panel">
-            <div className="spread">
-              <h2 style={{ margin: 0 }}>Your roster · {state.season}</h2>
-              <button className="primary" onClick={game.goToRotation}>
-                Done trading → set rotation
-              </button>
-            </div>
-            <p className="hint" style={{ marginBottom: 0 }}>
-              Up to 12 players. Number top-right is trade value (1–100), color dot is tier.
-              Trading many-for-1 leaves empty slots — depth is the price of a star.
-            </p>
-          </div>
-          <div className="panel">
-            <TradePanel
-              roster={state.roster}
-              season={season}
-              movesLeft={state.movesLeft}
-              previewTrade={game.previewTrade}
-              commitTrade={game.commitTrade}
-            />
-          </div>
-        </>
+        <TradePanel
+          roster={state.roster}
+          season={season}
+          movesLeft={state.movesLeft}
+          higherProbUsed={state.higherProbUsed}
+          previewTrade={game.previewTrade}
+          commitTrade={game.commitTrade}
+          onDone={game.goToRotation}
+        />
       )}
 
       {/* ROTATION */}
@@ -110,25 +97,6 @@ export default function Page() {
         <p className="hint" style={{ textAlign: 'center' }}>
           All constants live in <span className="seed">config/gameConstants.ts</span> · everything is deterministic from the seed.
         </p>
-      )}
-
-      {/* collapsible roster glance during trade */}
-      {state.phase === 'trade' && (
-        <details className="panel">
-          <summary style={{ cursor: 'pointer', color: 'var(--muted)' }}>
-            Roster at a glance
-          </summary>
-          <div className="grid" style={{ marginTop: 12 }}>
-            {state.roster.map((p) => (
-              <PlayerCard key={p.id} player={p} />
-            ))}
-            {Array.from({ length: Math.max(0, 12 - state.roster.length) }).map((_, i) => (
-              <div key={`empty-${i}`} className="card empty static">
-                <span>Empty slot</span>
-              </div>
-            ))}
-          </div>
-        </details>
       )}
     </div>
   );
